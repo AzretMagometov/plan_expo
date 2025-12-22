@@ -1,0 +1,48 @@
+# Конфигурация AI-модели для plan_expo
+# Поддерживаются: Claude, GPT-4, Gemini, локальные модели
+
+# Текущая выбранная модель (обновляется при первой инициализации)
+current_model: "claude"  # claude | gpt | gemini | local
+
+# Описание поддерживаемых моделей
+models:
+  claude:
+    name: "Claude (Anthropic)"
+    api_provider: "anthropic"
+    recommended_model: "claude-sonnet-4-5"
+    requires_api_key: true
+    cursorrules_file: ".cursorrules.example"
+    description: "Лучшее понимание структурированных промптов, отличная работа с .cursorrules"
+
+  gpt:
+    name: "ChatGPT (OpenAI)"
+    api_provider: "openai"
+    recommended_model: "gpt-4"
+    requires_api_key: true
+    cursorrules_file: ".cursorrules.gpt.example"
+    description: "Широкая доступность, хорошее качество ответов"
+
+  gemini:
+    name: "Gemini (Google)"
+    api_provider: "google"
+    recommended_model: "gemini-pro"
+    requires_api_key: true
+    cursorrules_file: ".cursorrules.gemini.example"
+    description: "Бесплатный доступ, хорошая работа с русским языком"
+
+  local:
+    name: "Local Model (Ollama/LMStudio)"
+    api_provider: "local"
+    recommended_model: "mistral"
+    requires_api_key: false
+    cursorrules_file: ".cursorrules.local.example"
+    description: "Полная приватность, офлайн работа"
+
+# Настройки промптов
+prompts:
+  format: "markdown"  # markdown | json | text
+  style: "structured"  # structured | conversational | technical
+  language: "ru"  # ru | en
+
+# Экспериментально: автоматическая адаптация промптов для модели
+auto_adapt_prompts: true

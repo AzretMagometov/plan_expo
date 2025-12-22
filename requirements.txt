@@ -1,0 +1,10 @@
+# plan_expo Python Dependencies
+
+# YAML parsing для конфигов
+PyYAML>=6.0
+
+# HTTP requests для Telegram/Slack уведомлений (опционально)
+requests>=2.28.0
+
+# Environment variables управление
+python-dotenv>=0.19.0

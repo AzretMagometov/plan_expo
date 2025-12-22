@@ -7,13 +7,20 @@ import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+import sys
+
+# Добавить system/scripts в sys.path для импорта config_loader
+SCRIPT_DIR = Path(__file__).parent
+sys.path.insert(0, str(SCRIPT_DIR))
+
+from config_loader import get_project_root, get_path
 import json
 import re
 
 # Пути к директориям
-PROJECT_ROOT = Path(__file__).parent.parent
-GOALS_DIR = PROJECT_ROOT / "goals"
-REFLECTIONS_DIR = PROJECT_ROOT / "reflections"
+PROJECT_ROOT = get_project_root()
+GOALS_DIR = get_path("goals")
+REFLECTIONS_DIR = get_path("reflections")
 DAILY_DIR = REFLECTIONS_DIR / "daily"
 
 def parse_goal_file(goal_path):

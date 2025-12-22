@@ -1,0 +1,89 @@
+# Конфигурация расписания для plan_expo automation
+
+# Базовая настройка
+schedule:
+  enabled: true
+  timezone: "UTC"  # Обновится из config/user_settings.yaml при первом запуске
+  python_path: "python3"
+  # project_root автоматически определяется через config_loader
+
+# Ежедневные задачи
+daily:
+  # Утренняя генерация рефлексии
+  morning_reflection:
+    enabled: true
+    time: "07:00"
+    script: "system/scripts/generate_reflection.py"
+    description: "Generate daily reflection template"
+
+  # Вечерний конвейер анализа
+  evening_pipeline:
+    enabled: true
+    start_time: "21:00"
+    tasks:
+      - name: "analyze_reflection"
+        time: "21:00"
+        script: "system/scripts/analyze_reflection.py"
+        description: "Analyze daily reflection"
+
+      - name: "update_metrics"
+        time: "21:05"
+        script: "system/scripts/auto_update_metrics.py"
+        description: "Update goal metrics"
+
+      - name: "track_streaks"
+        time: "21:10"
+        script: "system/scripts/track_habit_streaks.py"
+        description: "Track habit streaks"
+
+      - name: "daily_dashboard"
+        time: "21:15"
+        script: "system/scripts/generate_daily_dashboard.py"
+        description: "Generate daily dashboard"
+
+      - name: "git_commit"
+        time: "21:20"
+        script: "system/scripts/git_auto_commit.py"
+        description: "Auto-commit changes"
+
+      - name: "notify_daily"
+        time: "21:25"
+        script: "system/scripts/notification_system.py"
+        args: ["daily"]
+        description: "Send daily notification"
+
+# Еженедельные задачи (воскресенье)
+weekly:
+  enabled: true
+  day: 0  # 0 = Sunday
+  start_time: "22:00"
+  tasks:
+    - name: "weekly_dashboard"
+      time: "22:00"
+      script: "system/scripts/generate_weekly_dashboard.py"
+      description: "Generate weekly dashboard"
+
+    - name: "validate_structure"
+      time: "22:05"
+      script: "system/scripts/validate_goals.py"
+      description: "Validate goals structure"
+
+    - name: "notify_weekly"
+      time: "22:10"
+      script: "system/scripts/notification_system.py"
+      args: ["weekly"]
+      description: "Send weekly notification"
+
+# Проверки (ежечасно)
+health_checks:
+  enabled: true
+  interval: "hourly"  # every hour
+  script: "system/scripts/notification_system.py"
+  args: ["check"]
+  description: "Health check and streak monitoring"
+
+# Логирование
+logging:
+  enabled: true
+  log_dir: "user_data/logs/cron"
+  log_level: "INFO"

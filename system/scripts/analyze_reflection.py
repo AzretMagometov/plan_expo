@@ -7,13 +7,75 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
+import sys
+
+# Добавить system/scripts в sys.path для импорта config_loader
+SCRIPT_DIR = Path(__file__).parent
+sys.path.insert(0, str(SCRIPT_DIR))
+
+from config_loader import get_project_root, get_path
 import re
 
 # Пути к директориям
-PROJECT_ROOT = Path(__file__).parent.parent
-GOALS_DIR = PROJECT_ROOT / "goals"
-REFLECTIONS_DIR = PROJECT_ROOT / "reflections"
+PROJECT_ROOT = get_project_root()
+GOALS_DIR = get_path("goals")
+REFLECTIONS_DIR = get_path("reflections")
 DAILY_DIR = REFLECTIONS_DIR / "daily"
+
+def detect_critical_events(content):
+    """Выявляет критические события в рефлексии."""
+    critical_events = []
+    
+    # Ключевые слова для вынужденных изменений
+    forced_keywords = [
+        r'авария', r'потерял', r'уволили', r'болезнь', r'кризис',
+        r'не могу', r'невозможно', r'форс-мажор', r'вынужден',
+        r'пришлось', r'обстоятельства', r'потеря дохода', r'потеря работы',
+        r'травм', r'госпитал', r'операция'
+    ]
+    
+    # Ключевые слова для добровольных изменений
+    voluntary_keywords = [
+        r'решил изменить', r'переосмыслил', r'понял, что',
+        r'новые приоритеты', r'больше не актуально',
+        r'хочу сфокусироваться', r'изменил приоритеты'
+    ]
+    
+    # Проверяем препятствия и инсайты
+    obstacles_section = re.search(r'\*\*Что помешало:\*\*\s*\n((?:- .+\n?)+)', content, re.MULTILINE)
+    insights_section = re.search(r'## Инсайты и наблюдения\s*\n\n(.+?)(?=\n---|\n##|$)', content, re.DOTALL)
+    reflection_section = re.search(r'## 💭 РЕФЛЕКСИЯ\s*\n(.+?)(?=\n---|\n##|$)', content, re.DOTALL)
+    
+    text_to_check = content.lower()
+    
+    # Проверяем на вынужденные изменения
+    for keyword in forced_keywords:
+        if re.search(keyword, text_to_check, re.IGNORECASE):
+            # Находим контекст
+            pattern = r'.{0,100}' + keyword + r'.{0,100}'
+            matches = re.findall(pattern, content, re.IGNORECASE | re.DOTALL)
+            if matches:
+                critical_events.append({
+                    'type': 'FORCED_CHANGE',
+                    'keyword': keyword,
+                    'context': matches[0][:200],
+                    'confidence': 'high' if keyword in ['авария', 'потерял', 'уволили', 'болезнь'] else 'medium'
+                })
+    
+    # Проверяем на добровольные изменения
+    for keyword in voluntary_keywords:
+        if re.search(keyword, text_to_check, re.IGNORECASE):
+            pattern = r'.{0,100}' + keyword + r'.{0,100}'
+            matches = re.findall(pattern, content, re.IGNORECASE | re.DOTALL)
+            if matches:
+                critical_events.append({
+                    'type': 'VOLUNTARY_CHANGE',
+                    'keyword': keyword,
+                    'context': matches[0][:200],
+                    'confidence': 'medium'
+                })
+    
+    return critical_events
 
 def parse_reflection_file(reflection_path):
     """Парсит файл рефлексии и извлекает данные."""
@@ -34,7 +96,8 @@ def parse_reflection_file(reflection_path):
         'motivation': None,
         'focus': None,
         'insights': '',
-        'plan_tomorrow': ''
+        'plan_tomorrow': '',
+        'critical_events': detect_critical_events(content)
     }
     
     # Извлечение выполненных операций
@@ -128,8 +191,36 @@ def generate_ai_comments(reflection_data, active_goals):
     comments = {
         'analysis': [],
         'recommendations': [],
-        'adaptations': []
+        'adaptations': [],
+        'critical_events': []
     }
+    
+    # Проверка критических событий
+    if reflection_data['critical_events']:
+        for event in reflection_data['critical_events']:
+            if event['type'] == 'FORCED_CHANGE':
+                comments['critical_events'].append({
+                    'type': 'FORCED_CHANGE',
+                    'message': f"⚠️ Обнаружено критическое событие: {event['keyword']}",
+                    'context': event['context'],
+                    'action': 'Рекомендуется обновить файл цели с типом изменения FORCED_CHANGE и добавить в секцию "КРИТИЧЕСКИЕ СОБЫТИЯ"'
+                })
+                comments['recommendations'].append(
+                    f"🔴 КРИТИЧНО: Обнаружено вынужденное изменение ({event['keyword']}). "
+                    f"Необходимо обновить цель: изменить статус на 'paused' или 'cancelled' с подстатусом 'forced', "
+                    f"добавить событие в секцию 'КРИТИЧЕСКИЕ СОБЫТИЯ' и предложить адаптацию цели."
+                )
+            elif event['type'] == 'VOLUNTARY_CHANGE':
+                comments['critical_events'].append({
+                    'type': 'VOLUNTARY_CHANGE',
+                    'message': f"💭 Обнаружено переосмысление: {event['keyword']}",
+                    'context': event['context'],
+                    'action': 'Рекомендуется обновить файл цели с типом изменения VOLUNTARY_CHANGE'
+                })
+                comments['recommendations'].append(
+                    f"💡 Обнаружено переосмысление приоритетов ({event['keyword']}). "
+                    f"Рекомендуется обновить цель с типом изменения VOLUNTARY_CHANGE или создать новую цель."
+                )
     
     # Анализ выполнения операций
     total_operations = len(reflection_data['operations_done'])
@@ -228,6 +319,14 @@ def update_reflection_with_comments(reflection_path, comments):
     comments_section += "\n### Адаптации:\n"
     for adapt in comments['adaptations']:
         comments_section += f"- {adapt}\n"
+    
+    # Добавляем информацию о критических событиях
+    if comments['critical_events']:
+        comments_section += "\n### ⚠️ Критические события:\n"
+        for event in comments['critical_events']:
+            comments_section += f"- **{event['type']}:** {event['message']}\n"
+            comments_section += f"  - Контекст: {event['context'][:150]}...\n"
+            comments_section += f"  - Действие: {event['action']}\n"
     
     # Заменяем или добавляем секцию комментариев
     if "## Комментарии ИИ-системы" in content:

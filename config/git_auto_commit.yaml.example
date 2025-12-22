@@ -1,0 +1,24 @@
+# Конфигурация для git_auto_commit.py
+
+git:
+  # Включить автоматические коммиты
+  auto_commit: true
+
+  # Включить автоматический push (по умолчанию выключено для безопасности)
+  # Рекомендуется включать только для приватных репозиториев
+  auto_push: false
+
+  # Файлы/директории для включения в коммит
+  # Теперь используется новая структура user_data/
+  include_files:
+    - "user_data/reflections/"
+    - "user_data/dashboards/"
+    - "user_data/goals/"
+
+  # Шаблоны commit messages
+  templates:
+    daily_reflection: "📝 Daily reflection: {date}"
+    daily_dashboard: "📊 Daily dashboard: {date}"
+    weekly_dashboard: "📈 Weekly dashboard: week {week} {year}"
+    goals_update: "🎯 Goals update: metrics auto-update"
+    validation: "✅ Validation: structure fix"

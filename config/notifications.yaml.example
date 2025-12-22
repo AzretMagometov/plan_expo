@@ -1,0 +1,88 @@
+# Конфигурация системы уведомлений plan_expo
+
+# Общие настройки
+notifications:
+  enabled: true
+  default_channels: ["macos"]  # macos, telegram, slack
+
+# macOS Notification Center
+macos:
+  enabled: true
+  sound: "default"  # default, Glass, Hero, etc. or null for no sound
+
+# Telegram (опционально)
+# Токены загружаются из .env файла
+telegram:
+  enabled: false
+  # bot_token загружается из переменной TELEGRAM_BOT_TOKEN
+  # chat_id загружается из переменной TELEGRAM_CHAT_ID
+  # Получить токен у @BotFather: https://t.me/BotFather
+  # Получить chat_id у @userinfobot: https://t.me/userinfobot
+
+# Slack (опционально)
+# Webhook URL загружается из .env файла
+slack:
+  enabled: false
+  # webhook_url загружается из переменной SLACK_WEBHOOK_URL
+  # Создать Incoming Webhook: https://api.slack.com/messaging/webhooks
+
+# Шаблоны уведомлений
+templates:
+  # Утренние уведомления
+  morning:
+    title: "plan_expo: Утренняя рефлексия"
+    message: "📝 Шаблон рефлексии создан для {date}. Время заполнить!"
+    sound: "Glass"
+
+  # Вечерние уведомления
+  evening:
+    title: "plan_expo: Дашборд готов"
+    message: "📊 Дневной дашборд создан. Операции: {operations}%, Тактика: {tactics}%, Streak: {streak}"
+    sound: "Hero"
+
+  # Недельные уведомления
+  weekly:
+    title: "plan_expo: Недельный отчет"
+    message: "📈 Недельный дашборд готов. Средние показатели: {avg_operations}% операций, {avg_tactics}% тактики"
+    sound: "Hero"
+
+  # Предупреждения
+  warning:
+    title: "plan_expo: Предупреждение"
+    message: "{warning_text}"
+    sound: "Basso"
+
+  # Критические уведомления
+  critical:
+    title: "plan_expo: Требуется внимание!"
+    message: "⚠️ {critical_text}"
+    sound: "Sosumi"
+
+# Условия для проверок (check mode)
+health_checks:
+  # Streak под угрозой (< N дней)
+  streak_warning_threshold: 3
+
+  # Незаполненная рефлексия (если уже прошло N часов после утра)
+  reflection_fill_deadline_hours: 12
+
+  # Низкий процент выполнения за последние N дней
+  low_performance_days: 3
+  low_performance_threshold: 50
+
+# Расписание уведомлений
+schedule:
+  # Утренние напоминания (только если рефлексия не заполнена)
+  morning_reminder:
+    enabled: true
+    time: "09:00"  # Напомнить в 9:00 если еще не заполнена
+
+  # Вечернее напоминание (если не заполнена рефлексия)
+  evening_reminder:
+    enabled: true
+    time: "20:00"  # Напомнить в 20:00
+
+  # Напоминание перед сном
+  bedtime_reminder:
+    enabled: false
+    time: "22:30"
