@@ -36,70 +36,70 @@ The system is built around a **mandatory three-level hierarchy** for every goal:
 
 ```bash
 # Generate daily reflection template (morning)
-python3 scripts/generate_reflection.py
+python3 system/scripts/generate_reflection.py
 
 # Analyze filled reflection (evening, or ask AI coach: "Analyze today's reflection")
 # The AI coach will read, analyze, and update the reflection file automatically
 
 # Update goal metrics from reflection data
-python3 scripts/auto_update_metrics.py
+python3 system/scripts/auto_update_metrics.py
 
 # Track habit streaks
-python3 scripts/track_habit_streaks.py
+python3 system/scripts/track_habit_streaks.py
 
 # Generate daily dashboard (HTML + Markdown)
-python3 scripts/generate_daily_dashboard.py
+python3 system/scripts/generate_daily_dashboard.py
 
 # Open today's dashboard
-open dashboards/daily/$(date +%Y-%m-%d).html
+open user_data/dashboards/daily/$(date +%Y-%m-%d).html
 ```
 
 ### Weekly Workflow
 
 ```bash
 # Generate weekly dashboard
-python3 scripts/generate_weekly_dashboard.py
+python3 system/scripts/generate_weekly_dashboard.py
 
 # Validate goals structure
-python3 scripts/validate_goals.py
+python3 system/scripts/validate_goals.py
 
 # Auto-fix validation issues
-python3 scripts/validate_goals.py --fix
+python3 system/scripts/validate_goals.py --fix
 ```
 
 ### Automation Management
 
 ```bash
 # Setup cron schedule for automation
-python3 scripts/schedule_manager.py setup
+python3 system/scripts/schedule_manager.py setup
 
 # Check automation status
-python3 scripts/schedule_manager.py status
+python3 system/scripts/schedule_manager.py status
 
 # Enable/disable automation
-python3 scripts/schedule_manager.py enable
-python3 scripts/schedule_manager.py disable
+python3 system/scripts/schedule_manager.py enable
+python3 system/scripts/schedule_manager.py disable
 
 # Run entire daily pipeline manually (for testing)
-python3 scripts/schedule_manager.py run daily
+python3 system/scripts/schedule_manager.py run daily
 
 # Run individual tasks
-python3 scripts/schedule_manager.py run analyze_reflection
-python3 scripts/schedule_manager.py run daily_dashboard
+python3 system/scripts/schedule_manager.py run analyze_reflection
+python3 system/scripts/schedule_manager.py run daily_dashboard
 ```
 
 ### Testing Individual Scripts
 
 ```bash
 # Generate reflection for specific date
-python3 scripts/generate_reflection.py --date 2025-12-21
+python3 system/scripts/generate_reflection.py --date 2025-12-21
 
 # Update metrics for specific period
-python3 scripts/auto_update_metrics.py --date 2025-12-21
-python3 scripts/auto_update_metrics.py --period week
+python3 system/scripts/auto_update_metrics.py --date 2025-12-21
+python3 system/scripts/auto_update_metrics.py --period week
 
 # Generate dashboard for specific date
-python3 scripts/generate_daily_dashboard.py --date 2025-12-21
+python3 system/scripts/generate_daily_dashboard.py --date 2025-12-21
 ```
 
 ## Goal Change Tracking System
@@ -119,18 +119,18 @@ When updating goals, changes MUST be classified into one of four types:
 4. **`[PLAN_ADJUSTMENT]`** - Tactical/operational plan adjustments
    - Example: Changed If-Then triggers, adjusted KR metrics
 
-See `prompts/goal_change_tracking.md` for detailed classification logic.
+See `system/prompts/goal_change_tracking.md` for detailed classification logic.
 
 ## Directory Structure & Data Format
 
 ### Goals
-- Path: `goals/goal_YYYY_MM_DD_[description].md`
+- Path: `user_data/goals/goal_YYYY_MM_DD_[description].md`
 - Each goal contains all three levels + change history
 - Status: `active`, `paused`, `completed`, `cancelled`
 
 ### Reflections
 ```
-reflections/
+user_data/reflections/
 ├── daily/YYYY/MM/YYYY-MM-DD.md
 ├── weekly/YYYY/week_NN_YYYY.md
 ├── monthly/YYYY/YYYY-MM.md
@@ -140,7 +140,7 @@ reflections/
 
 ### Dashboards
 ```
-dashboards/
+user_data/dashboards/
 ├── daily/YYYY-MM-DD.{html,md}
 ├── weekly/week_NN_YYYY.{html,md}
 ├── streaks/YYYY-MM-DD_streaks.md
@@ -159,28 +159,28 @@ When working with the AI coach (as defined in `.cursorrules`):
 ### Creating a New Goal
 1. User states their goal
 2. AI uses prompts in sequence:
-   - `prompts/goal_formulation.md` - Formulate the goal
-   - `prompts/strategy_level.md` - Create strategic level
-   - `prompts/tactics_level.md` - Create tactical level
-   - `prompts/operations_level.md` - Create operational level
-   - `prompts/checklist_creation.md` - Create tracking checklists
-3. AI saves goal to `goals/` using `prompts/goal_management.md`
+   - `system/prompts/goal_formulation.md` - Formulate the goal
+   - `system/prompts/strategy_level.md` - Create strategic level
+   - `system/prompts/tactics_level.md` - Create tactical level
+   - `system/prompts/operations_level.md` - Create operational level
+   - `system/prompts/checklist_creation.md` - Create tracking checklists
+3. AI saves goal to `user_data/goals/` using `system/prompts/goal_management.md`
 
 ### Daily Reflection Analysis
 1. User fills out reflection template
 2. User tells AI: "Analyze today's reflection" (or similar)
 3. AI:
-   - Reads reflection file from `reflections/daily/YYYY/MM/YYYY-MM-DD.md`
+   - Reads reflection file from `user_data/reflections/daily/YYYY/MM/YYYY-MM-DD.md`
    - Analyzes operation execution, tactics progress, identity evidence
-   - Detects critical events (using `prompts/goal_change_tracking.md`)
+   - Detects critical events (using `system/prompts/goal_change_tracking.md`)
    - Generates "Комментарии ИИ-системы" section with analysis
    - Updates reflection file with comments
    - Updates goal files if needed (metrics, critical events)
 
 ### Progress Tracking
-- Use `prompts/progress_tracking.md` for analyzing progress
+- Use `system/prompts/progress_tracking.md` for analyzing progress
 - Always update "Последнее обновление" and "ИСТОРИЯ ИЗМЕНЕНИЙ" in goal files
-- Use `prompts/reflection_management.md` for reflection analysis details
+- Use `system/prompts/reflection_management.md` for reflection analysis details
 
 ## Automated Pipeline (Cron)
 
@@ -229,7 +229,9 @@ The system implements evidence-based goal-setting methods from `goal_setting_gui
 
 ## Script Architecture
 
-### Key Scripts
+### Key Scripts (located in `system/scripts/`)
+- `config_loader.py` - Central configuration and path management system
+- `init_user.py` - Interactive user initialization and setup
 - `generate_reflection.py` - Parses active goals, generates reflection templates
 - `analyze_reflection.py` - Detects critical events, analyzes progress (or use AI coach)
 - `auto_update_metrics.py` - Updates KR progress, evidence counts, streaks
@@ -241,9 +243,10 @@ The system implements evidence-based goal-setting methods from `goal_setting_gui
 
 ### Common Patterns
 All scripts follow:
-- Use `PROJECT_ROOT = Path(__file__).parent.parent`
+- Import and use `config_loader`: `from config_loader import get_project_root, get_path`
+- Get paths dynamically: `GOALS_DIR = get_path('goals')`, `REFLECTIONS_DIR = get_path('reflections')`
 - Parse goal files with regex to extract structured data
-- Log to `logs/` directory with timestamps
+- Log to `user_data/logs/` directory with timestamps
 - Return exit code 0 (success) or 1 (error)
 - Support `--date` parameter for historical processing
 
@@ -277,18 +280,20 @@ Configure in `config/notifications.yaml`:
 
 ## Troubleshooting
 
-- **Scripts fail:** Check `logs/cron/` for detailed error messages
-- **Cron not running:** Verify with `python3 scripts/schedule_manager.py status`
-- **Validation errors:** Run `python3 scripts/validate_goals.py` to see issues
-- **Reflection not analyzed:** Ensure file exists in correct location: `reflections/daily/YYYY/MM/YYYY-MM-DD.md`
+- **Scripts fail:** Check `user_data/logs/cron/` for detailed error messages
+- **Cron not running:** Verify with `python3 system/scripts/schedule_manager.py status`
+- **Validation errors:** Run `python3 system/scripts/validate_goals.py` to see issues
+- **Reflection not analyzed:** Ensure file exists in correct location: `user_data/reflections/daily/YYYY/MM/YYYY-MM-DD.md`
 
-For detailed troubleshooting, see `docs/TROUBLESHOOTING.md`.
+For detailed troubleshooting, see `system/docs/TROUBLESHOOTING.md`.
 
 ## Key Files to Reference
 
 - `.cursorrules` - Complete AI coach behavior rules
 - `goal_setting_guide.md` - Scientific foundation and method descriptions
 - `DATA_STRUCTURE.md` - Detailed data structure documentation
-- `docs/SCRIPTS.md` - Comprehensive script documentation
-- `docs/AUTOMATION.md` - Automation setup and management guide
-- `prompts/*.md` - Individual prompts for each workflow stage
+- `system/docs/SCRIPTS.md` - Comprehensive script documentation
+- `system/docs/AUTOMATION.md` - Automation setup and management guide
+- `system/docs/AI_MODELS.md` - AI model selection and setup guide
+- `system/prompts/*.md` - Individual prompts for each workflow stage
+- `config/user_settings.yaml` - User-specific configuration (created during init)
